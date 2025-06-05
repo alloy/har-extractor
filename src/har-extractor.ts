@@ -5,6 +5,7 @@ import * as path from "path";
 const filenamify = require("filenamify");
 const humanizeUrl = require("humanize-url");
 const makeDir = require("make-dir");
+
 export const getEntryContentAsBuffer = (entry: Entry): Buffer | undefined => {
     const content = entry.response.content;
     const text = content.text;
@@ -33,6 +34,10 @@ export const convertEntryAsFilePathFormat = (entry: Entry, removeQueryString: bo
     ) {
         return dirnames.join("/") + "/index.html";
     }
+    if (fileName && !fileName.includes(".") && entry.response.content.mimeType === "application/json") {
+        dirnames[dirnames.length - 1] = `${fileName}.json`;
+    }
+
     return dirnames.join("/");
 };
 
