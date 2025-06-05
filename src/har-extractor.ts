@@ -22,7 +22,7 @@ export const convertEntryAsFilePathFormat = (entry: Entry, removeQueryString: bo
     const requestURL = entry.request.url;
     const stripSchemaURL: string = humanizeUrl(removeQueryString ? requestURL.split("?")[0] : requestURL);
     const dirnames: string[] = stripSchemaURL.split("/").map((pathname) => {
-        return filenamify(pathname, {maxLength: 255});
+        return filenamify(pathname, { maxLength: 255 });
     });
     const fileName = dirnames[dirnames.length - 1];
     if (
@@ -44,12 +44,21 @@ export interface ExtractOptions {
 }
 
 export const extract = (harContent: Har, options: ExtractOptions) => {
+    const fileNames = new Map<string, number>();
     harContent.log.entries.forEach((entry) => {
         const buffer = getEntryContentAsBuffer(entry);
         if (!buffer) {
             return;
         }
-        const outputPath = path.join(options.outputDir, convertEntryAsFilePathFormat(entry, options.removeQueryString));
+        let outputPath = path.join(options.outputDir, convertEntryAsFilePathFormat(entry, options.removeQueryString));
+        const index = fileNames.get(outputPath) || 0;
+        fileNames.set(outputPath, index + 1);
+        if (index > 0) {
+            const ext = path.extname(outputPath);
+            const baseName = path.basename(outputPath, ext);
+            outputPath = path.join(path.dirname(outputPath), `${baseName}-${index}${ext}`);
+        }
+
         if (!options.dryRun) {
             makeDir.sync(path.dirname(outputPath));
         }
